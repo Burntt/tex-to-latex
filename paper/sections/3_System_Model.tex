@@ -1,0 +1,50 @@
+\section{SYSTEM MODEL}
+\label{sec: System Model}
+
+In this section, we introduce the system model for our edge-cloud network, focusing on container resource traces' representation, heterogeneity, and workload forecasting using historical data.
+
+\subsection{Traces}
+
+We consider an edge-cloud network with containers operating at all infrastructure layers. Each container generates resource traces, represented as $T(t) \in \mathbb{R}^{d_t \times d_f}$, where $d_t$ denotes the time dimension and $d_f$ represents the number of features. These features include metrics such as CPU usage, memory consumption, network bandwidth, and storage I/O operations. The matrix representation of the historical time-series data for a single trace is
+\begin{equation}
+T_i(t) = \begin{bmatrix}
+d_{1,1} & d_{1,2} & \cdots & d_{1,d_t} \\
+d_{2,1} & d_{2,2} & \cdots & d_{2,d_t} \\
+\vdots & \vdots & \ddots & \vdots \\
+d_{d_f,1} & d_{d_f,2} & \cdots & d_{d_f,d_t} 
+\end{bmatrix} \in \mathbb{R}^{d_f \times d_t}.
+\end{equation}
+
+Let \( N_{\text{all}} \) denote the total number of container traces in the network. Hence, a set of container traces can be defined as
+\begin{equation}
+\mathbf{T}(t) = \begin{Bmatrix} T_1, T_2, \cdots, T_{N_\text{all}} \end{Bmatrix} \in \mathbb{R}^{d_f \times d_t \times N_{\text{all}}}.
+\end{equation}
+
+\subsection{Workload Forecasting}
+
+Effective workload forecasting in edge-cloud networks is crucial for predicting future resource usage based on historical container traces. The primary objective is to accurately forecast future resource usage, denoted as $\hat{T}$, for a given prediction length $d_y$, using historical data.
+
+The forecasting model $f_\theta$, parameterized by $\theta$, is designed to make these predictions. Specifically, the model uses past observations of the resource usage trace $T_i$ to predict the future usage, given by
+\begin{equation}
+    \hat{T}_i[t + 1:t + d_y] = f_\theta\left(T_i[t - d_x + 1:t]\right),
+\end{equation}
+where $d_x$ represents the sequence length, indicating the number of past observations used for predictions, while $d_y$ represents the prediction length. The model parameters, denoted by $\theta$, are the variables that need to be optimized.
+
+Our goal is to minimize the Mean Absolute Error (MAE) for each container trace in the network, i.e.,
+\begin{align}
+    &\min \frac{1}{d_y} \sum_{i=1}^{N_{\text{all}}} \left\| T_i[t + 1:t + d_y] - \hat{T}_i[t + 1:t + d_y] \right\|_1,
+\end{align}
+where $\hat{T}_i[t + 1:t + d_y]$ is the prediction vector and $T_i[t + 1:t + d_y]$ is the actual resource usage vector at time $t + d_y$ for trace $i$.
+
+\subsection{Heterogeneity of Traces}
+\label{sec: Container Trace Heterogeneity}
+
+The considerable temporal variability and diversity of container traces necessitate examination of resource usage pattern variations both within and across containers, arising from several factors:
+
+\begin{itemize}
+    \item \textbf{Workload Diversity:} Containers handle a wide range of workloads, each with different resource needs. To manage this diversity, we transform each time-series $T_i(t)$ into a feature space $\mathcal{Z}$, which allows us to group the workloads into $K$ distinct categories. This grouping helps us distinguish between different types of workloads both in space and time, which is essential for the solution we propose in Section \ref{sec: Proposed Solution}.
+    
+    \item \textbf{Temporal Variability:} Resource usage can show significant temporal variability due to factors such as fluctuating user demands, periodic tasks, and time-of-day effects. This variability can be modeled as $T_i(t) = \hat{T_i}(t) + \epsilon$, where $T_i(t)$ denotes the resource usage at time $t$ for trace $T_i$, $\hat{T_i}$ is the function capturing the predictable component, and $\epsilon$ represents stochastic variations.
+\end{itemize}
+
+To manage this heterogeneity, the model should be able to predict resource usage for unseen traces by considering trace diversity and temporal variability.

@@ -1,0 +1,11 @@
+\section{RELATED WORKS}
+\label{sec: related works}
+
+The field of cloud-native workloads has seen substantial efforts to develop robust machine learning models for workload prediction. This section reviews key advancements in this domain, focusing on both standard predictions and generalization techniques.
+
+Various studies have investigated the use of RNNs for predicting individual workloads in cloud computing environments \cite{yuan2024improved, saxena2023performance}. Although RNNs are designed to manage sequential data patterns, they frequently encounter two primary limitations: diminishing memory of prior data and constraints related to sequential processing \cite{hochreiter1998vanishing, benidis2022deep}.
+
+To enhance generalization performance, models based on Convolutional Neural Networks (CNNs) \cite{LSTNet, RPTCN} were initially utilized to capture local patterns in time-series data, thanks to their superior ability to identify correlations between workloads compared to RNNs. Nevertheless, conventional convolutional models faced challenges with long-term dependencies due to the limitations of their convolution kernels \cite{acmtimeseriesreview2024}. To address these issues, hybrid models that integrate convolutional and recurrent architectures \cite{xu2022esdnn} have been developed, providing improved multivariate time-series forecasting in cloud environments.
+
+To utilize both spatial and temporal information in time-series data, integrating Graph Neural Networks (GNNs) and Generative Adversarial Networks (GANs) into RNNs has been explored. For example, \cite{li2024evogwp} presents a spatio-temporal GNN-based encoder-decoder model to predict long-term dynamic changes in workloads, while \cite{RNNGAN} introduces an ensemble GAN/RNN architecture for effective workload time-series prediction. Moreover, \cite{AGCRN} incorporates adaptive modules to develop Graph Convolutional Networks (GCNs) that capture detailed spatial and temporal correlations. Quantum Neural Networks (QNNs) have also been proposed for workload prediction, significantly enhancing prediction accuracy with a novel quantum approach \cite{10531701}. Despite these advancements, hybrid models continue to face limitations due to the inherent constraints of their RNN and CNN components.
+
