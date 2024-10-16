@@ -162,7 +162,7 @@ OmniFORE brings together several important innovations: a strategic method for s
 \label{sec: Trace Sampling Strategy}
 
 
-\begin{figure}\centering
+\begin{figure}
 \centering
 \includegraphics[width=0.49\textwidth]{img/proposed_solution_trace_selection.pdf}
 \caption{Trace sampling process for generalization training. Historical workload data are processed to extract container traces, which are clustered into representative groups.}
@@ -230,7 +230,7 @@ To utilize this dense representation, we modify a \textbf{supervised} (using cor
 
 % Fig. \ref{fig:2d_latent_space} shows a 2D Principal Component Analysis \cite{abdi2010principal} of clusters in the latent space, where each point represents a time-series trace, color-coded by cluster.
 
-\begin{figure}\centering
+\begin{figure}
 \centering
 \includegraphics[width=0.49\textwidth]{img/latent_space_creation.png}
 \caption{Overview of the latent space extractor. The input $\mathcal{T}(t)$ is encoded into latent space $\mathcal{Z}(z)$ by $f_{\text{encoder}}$ and then decoded by $f_{\text{decoder}}$ to reconstruct $\mathcal{R}(t) \approx \mathcal{T}(t)$.}
@@ -291,7 +291,7 @@ This unsupervised approach compresses time-series data into a latent space, capt
 
 The original transformer model \cite{vaswani2017attention} significantly enhances dependency capture, yet faces computational hurdles with long sequences \cite{wen2022transformers}. Recent developments in efficient transformers \cite{fasterandlightertransformers} and sparse attention techniques \cite{gorbett2023sparse, STRec, ma2024multivariate} mitigate these issues. Within OmniFORE, we utilize informers \cite{zhou2021informer}, which leverage sparse attention mechanisms to predict extensive time-series data efficiently. Informers are a viable alternative to traditional transformers, despite their implementation complexity, and a crucial element of our proposed solution.
 
-\begin{figure}\centering
+\begin{figure}
 \centering
 \includegraphics[width=0.49\textwidth]{img/Transformer_Architecture.pdf}
 \caption{High-level overview of the transformer architecture}
@@ -312,7 +312,7 @@ This matrix serves as the input to the subsequent layers of the model, encapsula
 
 \subsubsection*{Introduction to Attention Mechanism}
 
-\begin{figure}\centering
+\begin{figure}
 \centering
 \includegraphics[width=0.49\textwidth]{img/attention_goal.pdf}
 \caption{Attention mechanism refining time-series embeddings $\mathbf{E}_i$ to $\mathbf{E}_i'$, with arrow thickness indicating the strength of influence.}
@@ -366,7 +366,7 @@ where LayerNorm denotes layer normalization. This is followed by a position-wise
 
 This entire process—multi-headed attention, residual connections, layer normalizations, and feed-forward network—constitutes one layer of the transformer encoder. It is repeated across multiple stacked layers ($N_e$). Each layer operates on the output of the previous one, allowing for iterative refinement of embeddings and progressively developing intricate representations crucial for accurate predictions in complex time-series tasks.
 
-\begin{figure}\centering
+\begin{figure}
 \centering
 \includegraphics[width=0.42\textwidth]{img/attention_workings.pdf}
 \caption{Multi-Headed Attention: Input embeddings ($\mathbf{E}_i$) are transformed into query ($\mathbf{Q}$), key ($\mathbf{K}$), and value ($\mathbf{V}$) vectors. Multiple heads ($H$) capture different temporal aspects. Larger circles indicate stronger attention scores.}
@@ -447,7 +447,7 @@ OmniFORE's custom objective function $\text{Obj}(\mathbf{h})$ aims to maximize g
 \end{equation}
 where $N_{\text{val}}$ is the number of validation traces, $T_{\text{val}, i}$ is the $i$-th validation trace, and $\text{Perf}(\mathbf{h}, T_{\text{val}, i})$ represents the performance metric.
 
-\begin{figure}\centering
+\begin{figure}
 \centering
 \includegraphics[width=0.42\textwidth]{img/gp_toy_example.pdf}
 \caption{Bayesian optimization toy example. The star indicates the next value to try ($d_y = 5$). The target signifies the goal of minimizing the objective function.}
@@ -576,7 +576,7 @@ OmniFORE achieves a mean test RMSE of $2.99 \times 10^{-4}$ with a standard devi
 
 OmniFORE exhibits the lowest mean test RMSE and standard deviation, suggesting superior performance and reduced sensitivity to hyperparameters. However, precise tuning enhances OmniFORE's performance by a factor of 38.45, underscoring the significance of our custom Bayesian optimization for achieving robust generalization.
 
-\begin{figure}\centering%[H]
+\begin{figure}%[H]
 \centering
 \includegraphics[width=0.49\textwidth]{img/test_rmse_distribution_histogram.pdf}
 \caption{Sensitivity to Hyperparameters for Model Generalization}
@@ -592,7 +592,7 @@ OmniFORE achieves an MAE of $8.53 \times 10^{-4}$, RMSE of $5.50 \times 10^{-3}$
 
 Furthermore, OmniFORE achieves these results with an average inference time of \SI{8.70}{\milli\second}, compared to \SI{131}{\milli\second} for AGCRN and \SI{10.6}{\milli\second} for LSTNet. This represents a 17.92\% reduction in inference time compared to the best-performing SoA scheme, highlighting OmniFORE's efficiency for real-time applications where quick orchestration decisions are required with minimal resource overhead \cite{9500858, 8334540}. This efficiency is thanks to OmniFORE's use of generative inference, which predicts the entire sequence in a single step rather than sequentially.
 
-\begin{figure}\centering%[H]
+\begin{figure}%[H]
 \centering
 \includegraphics[width=0.49\textwidth]{img/metrics_comparison_regular.eps}
 \caption{Generalization performance comparison of MAE, RMSE and SMAPE for each model for the \textbf{regular training} traces.}
@@ -604,7 +604,7 @@ Figure \ref{fig:metrics_comparison_ZS} illustrates the prediction performance us
 
 OmniFORE's superior zero-shot performance, surpassing even its regular training performance, stems from its advanced attention-based mechanism that captures complex patterns and dependencies, enabling robust generalization. In contrast, AGCRN and LSTNet perform worse on zero-shot data, indicating potential benefits from information leakage between training and test sets. Additionally, data variability and the exact nature of loaded traces can influence performance outcomes.
 
-\begin{figure}\centering%[H]
+\begin{figure}%[H]
 \centering
 \includegraphics[width=0.42\textwidth]{img/metrics_comparison_zs.eps}
 \caption{Generalization performance comparison of MAE, RMSE, and SMAPE for each model on the \textbf{zero-shot} traces.}
@@ -620,7 +620,7 @@ As shown in Figure \ref{fig:pred_vs_inf}, we study the inference time (left subp
 
 OmniFORE consistently outperforms AGCRN and LSTNet in RMSE, demonstrating superior accuracy. AGCRN's RMSE is generally low performant. OmniFORE's combination of low inference time and high accuracy makes it ideal for real-time, dynamic applications, outperforming both AGCRN and LSTNet.
 
-\begin{figure}\centering%[H]
+\begin{figure}%[H]
 \centering
 \includegraphics[width=0.42\textwidth]{img/pred_vs_inf.eps}
 \caption{Impact of prediction length on inference time and RMSE for OmniFORE, AGCRN, and LSTNet.}
@@ -656,7 +656,7 @@ OmniFORE's advanced attention mechanism demonstrates a superior ability to under
 
 Notably, even in the low workload regions of the signal, OmniFORE demonstrates an understanding of the existence of minor peaks, showcasing its ability to capture fine-grained patterns in the data.
 
-\begin{figure}\centering
+\begin{figure}
 \centering
 \includegraphics[width=0.42\textwidth]{img/dynamic_workload_changes.eps}
 \caption{Comparison of true and predicted values for OmniFORE, AGCRN, and LSTNet under dynamic workload changes.}
@@ -667,7 +667,7 @@ Notably, even in the low workload regions of the signal, OmniFORE demonstrates a
 
 We compare OmniFORE, AGCRN, and LSTNet models on both the regular CPU cores dataset and the zero-shot dataset introduced in Section \ref{sec: Evaluation - Generalization Performance} to assess their capacity to handle data with heterogeneous variance levels (Figure \ref{fig:zs_sample_trace_comparison}). OmniFORE demonstrates superior performance in capturing both low and high variance patterns, evidenced by its closer alignment with true values across diverse trace volatilities. This advantage is particularly pronounced in highly fluctuating traces, where OmniFORE maintains accuracy while AGCRN and LSTNet show increased deviations. The consistent performance of OmniFORE across both datasets underscores its robust generalization capabilities, effectively adapting to previously unseen patterns in the zero-shot scenario. 
 
-\begin{figure}\centering%[H]
+\begin{figure}%[H]
 \centering
 \includegraphics[width=0.42\textwidth]{img/zs_sample_trace_comparison.eps}
 \caption{Comparison of true and \textbf{zero-shot} predicted values for OmniFORE, AGCRN, and LSTNet on a regular training dataset.}
@@ -680,7 +680,7 @@ In Figure \ref{fig:metrics_variance_comparison_fitted}, slopes indicate error in
 
 We evaluate OmniFORE, AGCRN, and LSTNet on low and high variance traces in both regular and zero-shot scenarios. For the five lowest variance traces, OmniFORE-regular achieves an MAE of $8.96 \times 10^{-7}$, outperforming AGCRN-regular ($1.49 \times 10^{-4}$) and LSTNet-regular ($2.30 \times 10^{-6}$) by 99.4\% and 61.0\% respectively. On high variance traces, OmniFORE-regular (MAE: $1.00 \times 10^{-2}$) surpasses LSTNet-regular ($2.44 \times 10^{-2}$) by 59.0\%. In the zero-shot scenario with high variance traces, OmniFORE (MAE: $3.01 \times 10^{-3}$) outperforms AGCRN ($4.26 \times 10^{-3}$) and LSTNet ($9.05 \times 10^{-3}$) by 29.3\% and 66.7\% respectively. These results demonstrate OmniFORE's consistent superiority across diverse variance levels and generalization scenarios.
 
-\begin{figure}\centering%[H]
+\begin{figure}%[H]
 \centering
 \includegraphics[width=0.47\textwidth]{img/metrics_variance_comparison_fitted2.eps}
 \caption{Trace variance vs. MAE and RMSE for OmniFORE, AGCRN, and LSTNet models, with fitted linear lines.}
@@ -695,7 +695,7 @@ Figure \ref{fig:test_rmse_convergence_comparison} depicts the test RMSE converge
 
 OmniFORE demonstrates the fastest convergence, achieving the lowest RMSE of $5.3 \times 10^{-3}$ by the 6th epoch. LSTNet converges more gradually, reaching $8.8 \times 10^{-3}$ by the 8th epoch. AGCRN exhibits the slowest convergence, reaching $6.0 \times 10^{-3}$ by the 16th epoch.
 
-\begin{figure}\centering%[H]
+\begin{figure}%[H]
 \centering
 \includegraphics[width=0.49\textwidth]{img/test_rmse_convergence_comparison.eps}
 \caption{Convergence of OmniFORE, AGCRN, and LSTNet models over epochs.}
@@ -707,7 +707,7 @@ OmniFORE demonstrates the fastest convergence, achieving the lowest RMSE of $5.3
 
 % We present an advanced edge-cloud orchestration system for scalable machine learning deployment, inference, and real-time decision-making (Fig. \ref{fig:Practical_Scenario}). This architecture integrates edge computing with cloud infrastructure, optimizing both computational efficiency and resource allocation.
 
-% \begin{figure}\centering[t]
+% \begin{figure}[t]
 % \centering
 % \includegraphics[width=0.47\textwidth]{img/Practical_Scenario.pdf}
 % \caption{Scalable ML deployment and inference for Edge-cloud orchestration.}
@@ -766,4 +766,9 @@ He has received the Best Paper Award at IEEE GLOBECOM 2014, the Best Demo Award 
 
 \vfill\pagebreak
 
+\end{document}
+
+
+% Debug information
+% End of document reached
 \end{document}

@@ -94,6 +94,45 @@ def center_figures(content):
     
     return figure_pattern.sub(center_figure_content, content)
 
+def process_figures(content):
+    figure_pattern = re.compile(r'\\begin{figure}(.*?)\\end{figure}', re.DOTALL)
+    
+    def format_figure(match):
+        figure_content = match.group(1)
+        
+        # Extract caption
+        caption_match = re.search(r'\\caption{(.*?)}', figure_content)
+        caption = caption_match.group(1) if caption_match else ''
+        
+        # Extract image
+        image_match = re.search(r'\\includegraphics(\[.*?\])?\{(.*?)\}', figure_content)
+        if image_match:
+            image_path = image_match.group(2)
+            
+            # Format the figure for better DocX output
+            formatted_figure = (
+                "\\begin{figure}\n"
+                "\\centering\n"
+                f"\\includegraphics[width=0.8\\textwidth]{{{image_path}}}\n"
+                f"\\caption{{{caption}}}\n"
+                "\\end{figure}\n"
+            )
+            return formatted_figure
+        else:
+            return match.group(0)  # Return original if no image found
+    
+    return figure_pattern.sub(format_figure, content)
+
+def log_figures(content):
+    figure_pattern = re.compile(r'\\begin{figure}(.*?)\\end{figure}', re.DOTALL)
+    figures = figure_pattern.findall(content)
+    
+    with open('figure_log.txt', 'w') as log_file:
+        for i, figure in enumerate(figures, 1):
+            log_file.write(f"Figure {i}:\n{figure}\n\n")
+    
+    return content  # Return the content unchanged
+
 base_path = os.path.dirname('paper/main.tex')
 with open('paper/main.tex', 'r') as file_in:
     content = file_in.read()
@@ -111,8 +150,23 @@ content = process_table_rows(content)
 # Simplify math environments
 content = simplify_math_environments(content)
 
-# Center figures
-content = center_figures(content)
+# Log figures
+content = log_figures(content)
+
+# Add debugging information at the end of the document
+content += "\n\n% Debug information"
+content += "\n% End of document reached"
+content += "\n\\end{document}"
 
 with open('paper/main_pandoc.tex', 'w') as file_out:
     file_out.write(content)
+
+print("Processing complete. Output written to 'paper/main_pandoc.tex'")
+print("Figure information logged to 'figure_log.txt'")
+
+# Print the last 10 lines of the processed file
+with open('paper/main_pandoc.tex', 'r') as file_in:
+    lines = file_in.readlines()
+    print("\nLast 10 lines of processed file:")
+    for line in lines[-10:]:
+        print(line.strip())
