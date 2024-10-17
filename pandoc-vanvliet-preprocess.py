@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 
 # Search-and-replace patterns
 patterns = [
@@ -44,8 +45,12 @@ def process_inputs(content, base_path):
         input_path = os.path.join(base_path, input_file)
         if not input_path.endswith('.tex'):
             input_path += '.tex'
-        with open(input_path, 'r') as f:
-            return process_inputs(f.read(), os.path.dirname(input_path))
+        try:
+            with open(input_path, 'r') as f:
+                return process_inputs(f.read(), os.path.dirname(input_path))
+        except FileNotFoundError:
+            print(f"Warning: {input_path} not found. Skipping this input.")
+            return f"% Warning: {input_file} not found and skipped."
     
     input_pattern = re.compile(r'\\input{([^}]+)}')
     return input_pattern.sub(replace_input, content)
@@ -89,49 +94,51 @@ def center_figures(content):
     
     def center_figure_content(match):
         figure_content = match.group(1)
-        centered_content = f'\\begin{{figure}}\\centering{figure_content}\\end{{figure}}'
-        return centered_content
-    
-    return figure_pattern.sub(center_figure_content, content)
-
-def process_figures(content):
-    figure_pattern = re.compile(r'\\begin{figure}(.*?)\\end{figure}', re.DOTALL)
-    
-    def format_figure(match):
-        figure_content = match.group(1)
         
-        # Extract caption
-        caption_match = re.search(r'\\caption{(.*?)}', figure_content)
-        caption = caption_match.group(1) if caption_match else ''
-        
-        # Extract image
         image_match = re.search(r'\\includegraphics(\[.*?\])?\{(.*?)\}', figure_content)
         if image_match:
             image_path = image_match.group(2)
+            full_path = os.path.join('paper', image_path)
             
-            # Format the figure for better DocX output
-            formatted_figure = (
-                "\\begin{figure}\n"
-                "\\centering\n"
-                f"\\includegraphics[width=0.8\\textwidth]{{{image_path}}}\n"
-                f"\\caption{{{caption}}}\n"
-                "\\end{figure}\n"
+            if not image_path.lower().endswith('.png'):
+                png_path = os.path.splitext(image_path)[0] + '.png'
+                full_png_path = os.path.join('paper', png_path)
+                
+                if not os.path.exists(full_path):
+                    print(f"Error: Original file not found: {full_path}")
+                    return match.group(0)  # Return original if file not found
+                
+                if not os.path.exists(full_png_path):
+                    try:
+                        if image_path.lower().endswith('.eps'):
+                            subprocess.run(['convert', full_path, full_png_path], check=True)
+                        elif image_path.lower().endswith('.pdf'):
+                            subprocess.run(['pdftoppm', '-png', '-singlefile', full_path, os.path.splitext(full_png_path)[0]], check=True)
+                        else:
+                            print(f"Error: Unsupported file format: {image_path}")
+                            return match.group(0)  # Return original for unsupported formats
+                        print(f"Converted {image_path} to {png_path}")
+                    except subprocess.CalledProcessError as e:
+                        print(f"Error: Failed to convert {image_path} to PNG: {e}")
+                        return match.group(0)  # Return original if conversion fails
+                    except FileNotFoundError:
+                        print("Error: Required conversion tools not found. Please install ImageMagick and poppler-utils.")
+                        return match.group(0)  # Return original if tools are missing
+                
+                figure_content = figure_content.replace(image_path, png_path)
+            
+            # Set a consistent width for all images and center them
+            figure_content = re.sub(
+                r'\\includegraphics(\[.*?\])?\{(.*?)\}',
+                r'\\centering\\includegraphics[width=0.8\\textwidth]{\2}',
+                figure_content
             )
-            return formatted_figure
-        else:
-            return match.group(0)  # Return original if no image found
+        
+        # Ensure the figure is centered within the figure environment
+        centered_content = f'\\begin{{figure}}\\centering\n{figure_content.strip()}\n\\end{{figure}}'
+        return centered_content
     
-    return figure_pattern.sub(format_figure, content)
-
-def log_figures(content):
-    figure_pattern = re.compile(r'\\begin{figure}(.*?)\\end{figure}', re.DOTALL)
-    figures = figure_pattern.findall(content)
-    
-    with open('figure_log.txt', 'w') as log_file:
-        for i, figure in enumerate(figures, 1):
-            log_file.write(f"Figure {i}:\n{figure}\n\n")
-    
-    return content  # Return the content unchanged
+    return figure_pattern.sub(center_figure_content, content)
 
 base_path = os.path.dirname('paper/main.tex')
 with open('paper/main.tex', 'r') as file_in:
@@ -150,19 +157,19 @@ content = process_table_rows(content)
 # Simplify math environments
 content = simplify_math_environments(content)
 
-# Log figures
-content = log_figures(content)
+# Center figures and convert EPS to PDF
+content = center_figures(content)
 
-# Add debugging information at the end of the document
-content += "\n\n% Debug information"
-content += "\n% End of document reached"
-content += "\n\\end{document}"
+# Remove any existing \end{document} commands
+content = re.sub(r'\\end{document}', '', content)
+
+# Add debugging information and ensure there's only one \end{document}
+content = content.rstrip() + "\n\n% Debug information\n% End of document reached\n\\end{document}\n"
 
 with open('paper/main_pandoc.tex', 'w') as file_out:
     file_out.write(content)
 
 print("Processing complete. Output written to 'paper/main_pandoc.tex'")
-print("Figure information logged to 'figure_log.txt'")
 
 # Print the last 10 lines of the processed file
 with open('paper/main_pandoc.tex', 'r') as file_in:
