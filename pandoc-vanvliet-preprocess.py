@@ -45,12 +45,8 @@ def process_inputs(content, base_path):
         input_path = os.path.join(base_path, input_file)
         if not input_path.endswith('.tex'):
             input_path += '.tex'
-        try:
-            with open(input_path, 'r') as f:
-                return process_inputs(f.read(), os.path.dirname(input_path))
-        except FileNotFoundError:
-            print(f"Warning: {input_path} not found. Skipping this input.")
-            return f"% Warning: {input_file} not found and skipped."
+        with open(input_path, 'r') as f:
+            return process_inputs(f.read(), os.path.dirname(input_path))
     
     input_pattern = re.compile(r'\\input{([^}]+)}')
     return input_pattern.sub(replace_input, content)
