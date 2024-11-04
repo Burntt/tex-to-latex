@@ -2,6 +2,52 @@ import os
 import re
 import subprocess
 
+def process_inputs(content, base_path):
+    def replace_input(match):
+        input_file = match.group(1)
+        input_path = os.path.join(base_path, input_file)
+        if not input_path.endswith('.tex'):
+            input_path += '.tex'
+        with open(input_path, 'r') as f:
+            return process_inputs(f.read(), os.path.dirname(input_path))
+    
+    input_pattern = re.compile(r'\\input{([^}]+)}')
+    return input_pattern.sub(replace_input, content)
+
+def preprocess_latex(input_file_path):
+    base_path = os.path.dirname(input_file_path)
+
+    with open(input_file_path, 'r') as file_in:
+        content = file_in.read()
+
+    # Process \input commands
+    content = process_inputs(content, base_path)
+
+    # Remove \newcolumntype command
+    content = re.sub(r'\\newcolumntype{.*?}', '', content)
+
+    # Remove problematic command
+    content = re.sub(r'\\newcolumntype{L}\[1\]{>{\raggedright\\let\\newline\\\\arraybackslash\\hspace{0pt}}m{#1}}', '', content)
+
+    # Remove any existing \end{document} commands
+    content = re.sub(r'\\end{document}', '', content)
+
+    # Add math filter to convert aligned environment to gather
+    content = re.sub(r'\\begin{aligned}', r'\\begin{gather}', content)
+    content = re.sub(r'\\end{aligned}', r'\\end{gather}', content)
+
+    # Add debugging information and ensure there's only one \end{document}
+    content = content.rstrip() + "\n\n% Debug information\n% End of document reached\n\\end{document}\n"
+
+    # Write the output to the same directory as the input file
+    output_file_path = os.path.join(base_path, 'main_pandoc.tex')
+    with open(output_file_path, 'w') as file_out:
+        file_out.write(content)
+
+    print(f"Processing complete. Output written to '{output_file_path}'")
+
+    return output_file_path
+
 # Search-and-replace patterns
 patterns = [
     (re.compile(r'\\begin{figure\*}'), r'\\begin{figure}'),
@@ -39,18 +85,6 @@ patterns = [
 author_pattern = re.compile(r"\\author\[(.*)\]{(.*)}")
 affil_pattern = re.compile(r"\\affil\[(.*)\]{(.*)}")
 
-def process_inputs(content, base_path):
-    def replace_input(match):
-        input_file = match.group(1)
-        input_path = os.path.join(base_path, input_file)
-        if not input_path.endswith('.tex'):
-            input_path += '.tex'
-        with open(input_path, 'r') as f:
-            return process_inputs(f.read(), os.path.dirname(input_path))
-    
-    input_pattern = re.compile(r'\\input{([^}]+)}')
-    return input_pattern.sub(replace_input, content)
-
 def process_table_rows(content):
     lines = content.split('\n')
     processed_lines = []
@@ -71,14 +105,38 @@ def process_table_rows(content):
 def simplify_math_environments(content):
     # Replace aligned and gather environments with a simpler structure
     def replace_complex_math(match):
-        lines = match.group(1).split('\\\\')
+        env_type = match.group(1)
+        lines = match.group(2).split('\\\\')
         simplified = '\\begin{equation*}\n'
         for line in lines:
-            simplified += line.strip() + '\n'
+            line = line.strip()
+            if env_type == 'gather':
+                line = re.sub(r'&', '', line)
+            line = re.sub(r'(\$\$?|\\\\?\(|\\\\?\[)', r'\\begin{math}', line)
+            line = re.sub(r'(\$\$?|\\\\?\)|\\\\\])', r'\\end{math}', line)
+            line = re.sub(r'\\\\([\w\s]+)', r'\\\\textbackslash{\1}', line)
+            if line:
+                simplified += line + '\\\\\n'
         simplified += '\\end{equation*}'
         return simplified
 
     content = re.sub(r'\\begin{(aligned|gather)}(.*?)\\end{\1}', replace_complex_math, content, flags=re.DOTALL)
+    
+    # Replace equation* environment with a simpler structure
+    def replace_equation_star(match):
+        lines = match.group(1).split('\\\\')
+        simplified = '\\begin{equation*}\n'
+        for line in lines:
+            line = line.strip()
+            line = re.sub(r'(\$\$?|\\\\?\(|\\\\?\[)', r'\\begin{math}', line)
+            line = re.sub(r'(\$\$?|\\\\?\)|\\\\\])', r'\\end{math}', line)
+            line = re.sub(r'\\\\([\w\s]+)', r'\\\\textbackslash{\1}', line)
+            if line:
+                simplified += line + '\\\\\n'
+        simplified += '\\end{equation*}'
+        return simplified
+
+    content = re.sub(r'\\begin{equation\*}(.*?)\\end{equation\*}', replace_equation_star, content, flags=re.DOTALL)
     
     # Remove \quad and \, from math environments
     content = re.sub(r'(\\quad|\\,)', ' ', content)
@@ -136,40 +194,43 @@ def center_figures(content):
     
     return figure_pattern.sub(center_figure_content, content)
 
-base_path = os.path.dirname('paper/main.tex')
-with open('paper/main.tex', 'r') as file_in:
-    content = file_in.read()
+def main():
+    input_file_path = 'paper_aroma/main.tex'
+    output_file_path = preprocess_latex(input_file_path)
 
-# Process \input commands
-content = process_inputs(content, base_path)
+    with open(output_file_path, 'r') as file_in:
+        content = file_in.read()
 
-# Apply other patterns
-for pat, rep in patterns:
-    content = pat.sub(rep, content)
+    # Apply other patterns
+    for pat, rep in patterns:
+        content = pat.sub(rep, content)
 
-# Process table rows
-content = process_table_rows(content)
+    # Process table rows
+    content = process_table_rows(content)
 
-# Simplify math environments
-content = simplify_math_environments(content)
+    # Simplify math environments
+    content = simplify_math_environments(content)
 
-# Center figures and convert EPS to PDF
-content = center_figures(content)
+    # Center figures and convert EPS to PDF
+    content = center_figures(content)
 
-# Remove any existing \end{document} commands
-content = re.sub(r'\\end{document}', '', content)
+    # Remove any existing \end{document} commands
+    content = re.sub(r'\\end{document}', '', content)
 
-# Add debugging information and ensure there's only one \end{document}
-content = content.rstrip() + "\n\n% Debug information\n% End of document reached\n\\end{document}\n"
+    # Add debugging information and ensure there's only one \end{document}
+    content = content.rstrip() + "\n\n% Debug information\n% End of document reached\n\\end{document}\n"
 
-with open('paper/main_pandoc.tex', 'w') as file_out:
-    file_out.write(content)
+    with open(output_file_path, 'w') as file_out:
+        file_out.write(content)
 
-print("Processing complete. Output written to 'paper/main_pandoc.tex'")
+    print("Processing complete. Output written to 'paper_aroma/main_pandoc.tex'")
 
-# Print the last 10 lines of the processed file
-with open('paper/main_pandoc.tex', 'r') as file_in:
-    lines = file_in.readlines()
-    print("\nLast 10 lines of processed file:")
-    for line in lines[-10:]:
-        print(line.strip())
+    # Print the last 10 lines of the processed file
+    with open(output_file_path, 'r') as file_in:
+        lines = file_in.readlines()
+        print("\nLast 10 lines of processed file:")
+        for line in lines[-10:]:
+            print(line.strip())
+
+if __name__ == '__main__':
+    main()
