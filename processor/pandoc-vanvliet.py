@@ -12,6 +12,7 @@ import sys
 import re
 from panflute import *
 import subprocess
+import traceback
 
 acronyms = {}
 refcounts = {}
@@ -23,7 +24,7 @@ def first_str(elem):
     if hasattr(elem, 'content'):
         for child in elem.content:
             if isinstance(child, Str):
-                return(child)
+                return child
             else:
                 t = first_str(child)
                 if t is not None:
@@ -46,11 +47,14 @@ def load_acronyms():
         print(f"Warning: {filename} not found. Skipping acronym loading.", file=sys.stderr)
         return
 
-    with open(filename, 'r', encoding='utf-8') as acronymsFile:
-        for line in acronymsFile:
-            match = pattern.match(line)
-            if match:
-                acronyms[match.group('label')] = match.group('value')
+    try:
+        with open(filename, 'r', encoding='utf-8') as acronymsFile:
+            for line in acronymsFile:
+                match = pattern.match(line)
+                if match:
+                    acronyms[match.group('label')] = match.group('value')
+    except Exception as e:
+        print(f"Error loading acronyms from {filename}: {e}\n{traceback.format_exc()}", file=sys.stderr)
 
 
 def resolve_acronyms(elem, doc):
@@ -165,17 +169,25 @@ def fix_si_range(elem, doc):
 
 
 def main(doc=None):
-    load_acronyms()
-    return run_filters([
-        resolve_acronyms,
-        add_space_to_citation,
-        number_float,
-        resolve_autoref,
-        rasterize_pdf_images,
-        fix_si_range,
-        add_references_section_heading,
-    ], doc=doc)
+    try:
+        load_acronyms()
+        return run_filters([
+            resolve_acronyms,
+            add_space_to_citation,
+            number_float,
+            resolve_autoref,
+            rasterize_pdf_images,
+            fix_si_range,
+            add_references_section_heading,
+        ], doc=doc)
+    except Exception as e:
+        print(f"Error in pandoc-vanvliet.py: {e}\n{traceback.format_exc()}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"An unexpected error occurred in pandoc-vanvliet.py: {e}\n{traceback.format_exc()}", file=sys.stderr)
+        sys.exit(1)
