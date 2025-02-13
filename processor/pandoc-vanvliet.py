@@ -5,6 +5,7 @@ Filter for pandoc to fix up some particularities with the vanvliet_paper.cls
 LaTeX class.
 
 Author: Marijn van Vliet <w.m.vanvliet@gmail.com>
+Modified to ensure proper Python 3 invocation.
 """
 import os
 import sys
@@ -34,8 +35,13 @@ def load_acronyms():
     global acronyms
     acronyms = {}  # Initialize the acronyms dictionary
     pattern = re.compile(r"\\newacronym(?:\[.*\])?\{(?P<label>[A-Za-z]+)\}\{.+\}\{(?P<value>[A-Za-z 0-9-]+)\}")
-
-    filename = os.path.join(os.path.dirname(__file__), 'paper', 'acronyms.tex')
+    
+    # First try to load from the current working directory
+    filename = os.path.join(os.getcwd(), "acronyms.tex")
+    if not os.path.exists(filename):
+        # Fall back to the default location relative to this script
+        filename = os.path.join(os.path.dirname(__file__), 'paper', 'acronyms.tex')
+        
     if not os.path.exists(filename):
         print(f"Warning: {filename} not found. Skipping acronym loading.", file=sys.stderr)
         return
@@ -125,17 +131,25 @@ def rasterize_pdf_images(elem, doc):
     if isinstance(elem, Image):
         print('Rasterizing', elem.url, file=sys.stderr)
         if elem.url.endswith('.pdf'):
-            url_png = 'paper/' + elem.url.replace('.pdf', '.png')
+            # Use the image's provided path.
+            img_path = elem.url
+            # If the URL starts with "paper/", remove that prefix.
+            if img_path.startswith("paper" + os.sep):
+                img_path = img_path[len("paper" + os.sep):]
+            url_png = img_path.replace('.pdf', '.png')
             if not os.path.exists(url_png):
-                subprocess.run(['pdftoppm',
-                                '-scale-to', '1024',
-                                '-png',
-                                '-singlefile',
-                                f'paper/{elem.url}',
-                                f'paper/{elem.url[:-4]}'])
+                try:
+                    subprocess.run(['pdftoppm',
+                                    '-scale-to', '1024',
+                                    '-png',
+                                    '-singlefile',
+                                    img_path,
+                                    img_path[:-4]], check=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error: Failed to convert {img_path} to PNG: {e}", file=sys.stderr)
+                    return elem
             elem.url = url_png
-        # Remove any width annotations made in the LaTeX file, which Word
-        # cannot handle, so the width defaults to the pagewidth.
+        # Remove any width attributes (Word cannot handle them well).
         if 'width' in elem.attributes:
             del elem.attributes['width']
 

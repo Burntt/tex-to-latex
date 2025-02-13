@@ -1,0 +1,72 @@
+.
+├── cmd
+├── input_papers
+│   └── AERO
+│       ├── format
+│       │   ├── author1.pdf
+│       │   ├── author2.pdf
+│       │   ├── author3.pdf
+│       │   ├── biographies.tex
+│       │   ├── IEEEtran.bst
+│       │   └── new_logo.eps
+│       ├── ieeetmlcn.cls
+│       ├── img
+│       │   ├── 2x4_metrics_grid
+│       │   │   ├── cpu_utilization.pdf
+│       │   │   ├── energy_consumption.pdf
+│       │   │   ├── energy_consumption.png
+│       │   │   ├── migration_counts.pdf
+│       │   │   ├── ram_utilization.pdf
+│       │   │   ├── response_time.pdf
+│       │   │   └── sla_violations.pdf
+│       │   ├── aero_vs_sparsetsf_predictions_mem.pdf
+│       │   ├── aero_vs_sparsetsf_predictions_mem.png
+│       │   ├── avg_cpu_cores_over_time.pdf
+│       │   ├── avg_cpu_cores_over_time.png
+│       │   ├── feature_grid_comparison.pdf
+│       │   ├── feature_grid_comparison.png
+│       │   ├── gp_toy_example.pdf
+│       │   ├── gp_toy_example.psd
+│       │   ├── inference_times_comparison.pdf
+│       │   ├── inference_times_comparison.png
+│       │   ├── live_performance.pdf
+│       │   ├── live_performance.png
+│       │   ├── model_params_and_memory_comparison.pdf
+│       │   ├── model_params_and_memory_comparison.png
+│       │   ├── multivariate_prediction_cpu_with_rmse.pdf
+│       │   ├── multivariate_prediction_cpu_with_rmse.png
+│       │   ├── multivariate_prediction.eps
+│       │   ├── multivariate_prediction.pdf
+│       │   ├── multivariate_prediction.png
+│       │   ├── normalized_convergence_comparison.eps
+│       │   ├── normalized_convergence_comparison.pdf
+│       │   ├── normalized_convergence_comparison.png
+│       │   ├── Practical_Scenario.pdf
+│       │   ├── Practical_Scenario.psd
+│       │   ├── simulation_flowchart.pdf
+│       │   └── simulation_flowchart.png
+│       ├── main_paper.tex
+│       ├── references_tidy.bib
+│       └── sec_R0
+│           ├── 1_Introduction.tex
+│           ├── 2_Related_Works.tex
+│           ├── 3_System_Model.tex
+│           ├── 4_Proposed_Solution.tex
+│           ├── 5_Evaluation_Regular.tex
+│           ├── 6_Evaluation_Simulations.tex
+│           └── 7_Evaluation_Live.tex
+├── logs
+├── processor
+│   ├── __init__.py
+│   ├── pandoc-vanvliet-preprocess.py
+│   └── pandoc-vanvliet.py
+├── README.md
+├── requirements.txt
+├── result
+│   └── main_pandoc.tex
+├── run_converter.py
+├── template
+│   └── pandoc_template.docx
+└── tree.txt
+
+11 directories, 59 files
