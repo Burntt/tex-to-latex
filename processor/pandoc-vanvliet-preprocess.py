@@ -170,17 +170,17 @@ def center_figures(content, base_path, method=3):
     r"""
     Process figure environments so that figures are centered and images are scaled to 0.6 of the text width.
     
-    Three methods are provided:
+    Four methods are provided:
     
     Method 1:
-        Inserts a \centering command before the \includegraphics call.
+        Inserts a \centering command before the \includegraphics call inside a figure environment.
         Example output:
           \begin{figure}
           \centering\includegraphics[width=0.6\textwidth]{<image>}
           \end{figure}
     
     Method 2:
-        Wraps the image in a center environment.
+        Wraps the image in a center environment inside a figure environment.
         Example output:
           \begin{figure}
           \begin{center}
@@ -189,11 +189,21 @@ def center_figures(content, base_path, method=3):
           \end{figure}
     
     Method 3:
-        Uses \centerline to center the image.
+        Uses \centerline to center the image inside a figure environment.
         Example output:
           \begin{figure}
           \centerline{\includegraphics[width=0.6\textwidth]{<image>}}
           \end{figure}
+    
+    Method 4:
+        Removes the figure environment entirely and outputs a centered image as its own block.
+        Extra paragraph breaks (with some vertical space) are added so that text flows freely above and below.
+        Example output:
+          \par\medskip
+          \begin{center}
+          \includegraphics[width=0.6\textwidth]{<image>}
+          \end{center}
+          \medskip\par
     """
     try:
         image_folders = get_image_folders(base_path)
@@ -231,8 +241,10 @@ def center_figures(content, base_path, method=3):
                             if image_path.lower().endswith('.eps'):
                                 subprocess.run(['convert', full_path, full_png_path], check=True)
                             elif image_path.lower().endswith('.pdf'):
-                                subprocess.run(['pdftoppm', '-png', '-singlefile',
-                                                full_path, os.path.splitext(full_png_path)[0]], check=True)
+                                subprocess.run(
+                                    ['pdftoppm', '-png', '-singlefile',
+                                     full_path, os.path.splitext(full_png_path)[0]], check=True
+                                )
                             else:
                                 print(f"Error: Unsupported file format: {image_path}", file=sys.stderr)
                                 return match.group(0)
@@ -251,9 +263,13 @@ def center_figures(content, base_path, method=3):
                     new_cmd = f"\\begin{{center}}\\includegraphics[width=0.6\\textwidth]{{{image_path}}}\\end{{center}}"
                 elif method == 3:
                     new_cmd = f"\\centerline{{\\includegraphics[width=0.6\\textwidth]{{{image_path}}}}}"
+                elif method == 4:
+                    # For method 4, output just the image (centered) with paragraph breaks,
+                    # without a figure environment.
+                    new_cmd = f"\\includegraphics[width=0.6\\textwidth]{{{image_path}}}"
                 else:
                     new_cmd = f"\\centering\\includegraphics[width=0.6\\textwidth]{{{image_path}}}"
-                # Use a lambda so that the replacement string is returned literally without interpretation.
+                # Replace the original \includegraphics command with our new command.
                 new_figure_content = re.sub(
                     r'\\includegraphics(?:\[.*?\])?\{(.*?)\}',
                     lambda m: new_cmd,
@@ -261,7 +277,11 @@ def center_figures(content, base_path, method=3):
                 )
             else:
                 new_figure_content = figure_content
-            if method == 2:
+            # Wrap the content according to the method.
+            if method == 4:
+                # No figure environment: insert paragraph breaks for free movement.
+                centered_content = f"\\par\\medskip\\begin{{center}}{new_figure_content.strip()}\\end{{center}}\\medskip\\par"
+            elif method == 2:
                 centered_content = f"\\begin{{figure}}\n{new_figure_content.strip()}\n\\end{{figure}}"
             else:
                 centered_content = f"\\begin{{figure}}\\centering\n{new_figure_content.strip()}\n\\end{{figure}}"
@@ -274,8 +294,8 @@ def center_figures(content, base_path, method=3):
 def main():
     parser = argparse.ArgumentParser(description="Preprocess a LaTeX file for DOCX conversion.")
     parser.add_argument("input_file", help="Path to the input .tex file")
-    parser.add_argument("--figmethod", type=int, choices=[1,2,3], default=3,
-                        help="Method to center figures: 1, 2, or 3. Default is 3.")
+    parser.add_argument("--figmethod", type=int, choices=[1,2,3,4], default=3,
+                        help="Method to center figures: 1, 2, 3, or 4. Default is 3.")
     args = parser.parse_args()
     
     input_file_path = os.path.abspath(args.input_file)
