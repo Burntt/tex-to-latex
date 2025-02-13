@@ -294,20 +294,17 @@ def center_figures(content, base_path, method=3):
 def main():
     parser = argparse.ArgumentParser(description="Preprocess a LaTeX file for DOCX conversion.")
     parser.add_argument("input_file", help="Path to the input .tex file")
-    parser.add_argument("--figmethod", type=int, choices=[1,2,3,4], default=3,
-                        help="Method to center figures: 1, 2, 3, or 4. Default is 3.")
+    parser.add_argument("--figmethod", type=int, choices=[1, 2, 3, 4], default=4,
+                        help="Method to center figures: 1, 2, 3, or 4. If not specified, defaults to 4.")
     args = parser.parse_args()
     
     input_file_path = os.path.abspath(args.input_file)
     content, base_path = preprocess_latex(input_file_path)
     
-    # Apply other search-and-replace patterns (omitted here for brevity).
-    # For example: content = re.sub(...), process_table_rows(content), simplify_math_environments(content)
-    
-    # Center figures using the chosen method.
+    # Apply other search-and-replace patterns as needed.
     content = center_figures(content, base_path, method=args.figmethod)
     
-    # Remove any extra \end{document} and add a single one at the end.
+    # Remove any extra \end{document} commands and add a single one at the end.
     content = re.sub(r'\\end{document}', '', content)
     content = content.rstrip() + "\n\n% Debug information\n% End of document reached\n\\end{document}\n"
     
@@ -320,11 +317,6 @@ def main():
         with open(output_file_path, 'w', encoding='utf-8') as file_out:
             file_out.write(content)
         print("Processing complete. Output written to", output_file_path)
-        with open(output_file_path, 'r', encoding='utf-8') as file_in:
-            lines = file_in.readlines()
-            print("\nLast 10 lines of processed file:")
-            for line in lines[-10:]:
-                print(line.strip())
     except Exception as e:
         sys.exit(f"Error writing output file: {e}\n{traceback.format_exc()}")
 
